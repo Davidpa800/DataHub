@@ -1,0 +1,10 @@
+deployment:
+  tasks:
+    # Ruta donde se publicará tu sitio (carpeta accesible por el navegador)
+    - export DEPLOYPATH=/home/yqukl8w3b3dr/public_html
+
+    # Copiar el contenido de la carpeta 'public' de Laravel hacia la carpeta pública
+    - /bin/cp -R public/* $DEPLOYPATH
+
+    # (Opcional) Mostrar en el log que el despliegue se completó
+    - echo "✅ Laravel deployment completed to $DEPLOYPATH"
