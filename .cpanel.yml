@@ -1,10 +1,23 @@
+---
 deployment:
   tasks:
-    # Ruta donde se publicará tu sitio (carpeta accesible por el navegador)
-    - export DEPLOYPATH=/home/yqukl8w3b3dr/public_html
+    - export DEPLOYPATH=/home/yqukl8w3b3dr/public_html/public
+    - /bin/echo "🚀 Iniciando despliegue en $DEPLOYPATH"
 
-    # Copiar el contenido de la carpeta 'public' de Laravel hacia la carpeta pública
-    - /bin/cp -R public/* $DEPLOYPATH
+    # Copiar todos los archivos del proyecto excepto los ocultos
+    - /bin/rsync -av --exclude='.git' --exclude='.env' --exclude='.cpanel.yml' ./ $DEPLOYPATH
 
-    # (Opcional) Mostrar en el log que el despliegue se completó
-    - echo "✅ Laravel deployment completed to $DEPLOYPATH"
+    # Instalar dependencias PHP si composer.json existe
+    - if [ -f composer.json ]; then /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader; fi
+
+    # Ajustar permisos
+    - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
+    - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
+
+    # Limpiar cachés de Laravel
+    - cd $DEPLOYPATH && php artisan config:clear
+    - cd $DEPLOYPATH && php artisan route:clear
+    - cd $DEPLOYPATH && php artisan view:clear
+    - cd $DEPLOYPATH && php artisan cache:clear
+
+    - /bin/echo "✅ Despliegue completado correctamente"
