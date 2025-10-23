@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Este archivo define la estructura de tu tabla 'users'
+ * en la base de datos.
+ */
 return new class extends Migration
 {
     /**
@@ -12,14 +16,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->id(); // Columna 'id'
+            $table->string('name'); // Columna 'name'
+            $table->string('email')->unique(); // Columna 'email' (debe ser única)
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password'); // Columna 'password' (aquí se guarda el HASH)
             $table->rememberToken();
-            $table->timestamps();
+            $table->timestamps(); // Columnas 'created_at' y 'updated_at'
         });
+
+        // (Las otras tablas son para el 'remember token' y jobs fallidos,
+        // la importante es 'users')
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
@@ -27,13 +34,14 @@ return new class extends Migration
             $table->timestamp('created_at')->nullable();
         });
 
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
+        Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('uuid')->unique();
+            $table->text('connection');
+            $table->text('queue');
             $table->longText('payload');
-            $table->integer('last_activity')->index();
+            $table->longText('exception');
+            $table->timestamp('failed_at')->useCurrent();
         });
     }
 
@@ -44,6 +52,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('failed_jobs');
     }
 };
