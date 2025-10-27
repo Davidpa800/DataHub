@@ -2,19 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+// Añadido para Spatie
+use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable; // ¡Esta es la clave!
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-/**
- * Este es el modelo que 'Auth::attempt' usa automáticamente.
- * La clase extiende 'Authenticatable', lo que le da toda la
- * funcionalidad de inicio de sesión de Laravel.
- */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles; // <-- Añadido HasRoles aquí
 
     /**
      * The attributes that are mass assignable.
@@ -46,7 +42,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed', // ¡Importante! Hashea la contraseña automáticamente
+            'password' => 'hashed',
         ];
     }
 }
+

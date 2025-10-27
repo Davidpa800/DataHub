@@ -1,167 +1,274 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class=""> <!-- Clase 'dark' se añade/quita con JS -->
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Admin - OSH Consulting</title>
+    <title>@yield('title', 'Dashboard') - OSH Consulting</title> <!-- Título dinámico -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/flowbite@1.5.3/dist/flowbite.js"></script>
-    <!-- Alpine.js para interactividad del sidebar (añadido 'defer' para mejor carga) -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        // Configuración personalizada de Tailwind (opcional, pero útil si defines colores)
+        tailwind.config = {
+            darkMode: 'class', // Habilitar modo oscuro basado en clase
+            theme: {
+                extend: {
+                    // Puedes añadir colores personalizados aquí si los necesitas
+                    colors: {
+                        // Colores personalizados para el tema claro
+                        'osh-light-bg': '#F0F4F8', // Un gris azulado muy claro
+                        'osh-light-sidebar': '#1E3A8A', // Azul oscuro para sidebar
+                        'osh-light-sidebar-link': '#E0E7FF', // Azul muy pálido para texto link
+                        'osh-light-sidebar-hover': '#1E40AF', // Azul un poco más claro para hover
+                        'osh-light-sidebar-active': '#1C3D7A', // Azul más oscuro para activo
+                        'osh-light-navbar': '#FFFFFF',
+                        'osh-light-text': '#1F2937', // Gris oscuro para texto general
+                        'osh-light-accent': '#2563EB', // Azul principal para acentos
+
+                        // Colores personalizados para el tema oscuro
+                        'osh-dark-bg': '#0F172A', // Azul muy oscuro casi negro
+                        'osh-dark-sidebar': '#1E293B', // Gris azulado oscuro para sidebar
+                        'osh-dark-sidebar-link': '#94A3B8', // Gris azulado claro para texto link
+                        'osh-dark-sidebar-hover': '#334155', // Gris azulado medio para hover
+                        'osh-dark-sidebar-active': '#0F172A', // Mismo que fondo para activo
+                        'osh-dark-navbar': '#1E293B', // Mismo que sidebar oscuro
+                        'osh-dark-text': '#E2E8F0', // Gris muy claro para texto general
+                        'osh-dark-accent': '#3B82F6', // Azul más brillante para acentos
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Alpine JS (Para interactividad como dropdowns y sidebar móvil) -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Flowbite (Para componentes como dropdowns, modales, etc.) -->
+    <link rel="stylesheet" href="https://unpkg.com/flowbite@1.5.3/dist/flowbite.min.css" />
+    <script src="https://unpkg.com/flowbite@1.5.3/dist/flowbite.js"></script> <!-- Cargar después de Alpine si usas ambos -->
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <!-- Fuentes -->
+    <link href="https://fonts.cdnfonts.com/css/museo-500" rel="stylesheet">
     <style>
-        /* Estilos para scrollbar (opcional pero mejora la estética) */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; /* cool-gray-300 */
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; /* cool-gray-400 */
-        }
+        @import url('https://fonts.cdnfonts.com/css/museo-500');
+        @import url('https://fonts.cdnfonts.com/css/museo-300');
+        body { font-family: 'Museo 300', sans-serif; }
+        .museo-500 { font-family: 'Museo 500', sans-serif; }
+
+        /* Estilos personalizados para scrollbars (opcional) */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-track { background: #2d3748; }
+        ::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4a5568; }
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #718096; }
+
+        /* Pequeño ajuste para que Alpine no cause 'flash' al cargar */
+        [x-cloak] { display: none !important; }
     </style>
+
+    <!-- Script inicial modo oscuro (importante ponerlo en head) -->
+    <script>
+        try {
+            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch (e) { document.documentElement.classList.remove('dark'); }
+    </script>
+
+    @stack('styles') {{-- Para añadir estilos específicos desde las vistas hijas --}}
+
 </head>
+<body class="bg-osh-light-bg dark:bg-osh-dark-bg text-osh-light-text dark:text-osh-dark-text transition-colors duration-300">
 
-<body class="bg-gray-100 font-sans" style="font-family: 'Museo 300', sans-serif;">
-
-<div x-data="{ sidebarOpen: true }" class="flex h-screen bg-gray-100">
-
+<div x-data="{ sidebarOpen: false }" @keydown.escape="sidebarOpen = false" class="flex h-screen bg-osh-light-bg dark:bg-osh-dark-bg overflow-hidden">
     <!-- Sidebar -->
     <aside
-        class="flex flex-col w-64 h-screen px-4 py-8 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700 transition-all duration-300"
-        :class="{'-ml-64': !sidebarOpen}">
+        :class="sidebarOpen ? 'translate-x-0 ease-out' : '-translate-x-full ease-in'"
+        class="fixed inset-y-0 left-0 z-30 w-64 overflow-y-auto transition duration-300 transform bg-osh-light-sidebar dark:bg-osh-dark-sidebar lg:translate-x-0 lg:static lg:inset-0 shadow-lg print:hidden">
 
         <!-- Logo -->
-        <a href="{{ route('dashboard') }}" class="mx-auto">
-            <img class="w-auto h-10" src="{{ asset('img/osh_logo.png') }}" alt="OSH Consulting Logo">
-        </a>
-
-        <div class="flex flex-col items-center mt-6 -mx-2">
-            <img class="object-cover w-24 h-24 mx-2 rounded-full"
-                 src="https://placehold.co/100x100/e2e8f0/334155?text=Admin" alt="avatar">
-            <h4 class="mx-2 mt-2 font-medium text-gray-800 dark:text-gray-200" style="font-family: 'Museo 500', sans-serif;">{{ Auth::user()->name }}</h4>
-            <p class="mx-2 mt-1 text-sm font-normal text-gray-600 dark:text-gray-400">{{ Auth::user()->email }}</p>
+        <div class="flex items-center justify-center mt-8 px-4">
+            <a href="{{ route('inicio') }}">
+                <img src="{{ asset('img/osh_logo_blanco.png') }}" alt="OSH Logo" class="h-10 w-auto"
+                     onerror="this.src='https://placehold.co/150x40/ffffff/1E3A8A?text=OSH+Logo'; this.onerror=null;">
+                <!-- Asegúrate de tener una versión blanca del logo -->
+            </a>
         </div>
 
-        <div class="flex flex-col justify-between flex-1 mt-6">
-            <nav>
-                <!-- Enlaces Principales -->
-                <a class="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg dark:bg-gray-800 dark:text-gray-200"
-                   href="{{ route('dashboard') }}">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M19 11H5M19 11C20.1046 11 21 11.8954 21 13V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V13C3 11.8954 3.89543 11 5 11M19 11V9C19 7.89543 18.1046 7 17 7M5 11V9C5 7.89543 5.89543 7 7 7M7 7V5C7 3.89543 7.89543 3 9 3H15C16.1046 3 17 3.89543 17 5V7M7 7H17"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="mx-4 font-medium" style="font-family: 'Museo 500', sans-serif;">Dashboard</span>
+        <!-- Menú de Navegación -->
+        <nav class="mt-10 px-2 space-y-1">
+            {{-- Enlace al Dashboard Principal --}}
+            <a class="flex items-center px-4 py-2 text-osh-light-sidebar-link rounded hover:bg-osh-light-sidebar-hover dark:text-osh-dark-sidebar-link dark:hover:bg-osh-dark-sidebar-hover transition-colors duration-200 {{ request()->routeIs('dashboard') ? 'bg-osh-light-sidebar-active dark:bg-osh-dark-sidebar-active font-semibold' : '' }}"
+               href="{{ route('dashboard') }}">
+                <i class="fas fa-tachometer-alt w-5 h-5 mr-3"></i>
+                <span class="font-medium museo-500">Dashboard</span>
+            </a>
+
+            {{-- Enlace al Módulo NOM-035 (si tiene permiso) --}}
+            @can('gestionar nom035')
+                <a class="flex items-center px-4 py-2 text-osh-light-sidebar-link rounded hover:bg-osh-light-sidebar-hover dark:text-osh-dark-sidebar-link dark:hover:bg-osh-dark-sidebar-hover transition-colors duration-200 {{ request()->routeIs('nom035.*') ? 'bg-osh-light-sidebar-active dark:bg-osh-dark-sidebar-active font-semibold' : '' }}"
+                   href="{{ route('nom035.index') }}">
+                    <i class="fas fa-file-signature w-5 h-5 mr-3"></i>
+                    <span class="font-medium museo-500">Gestión NOM-035</span>
                 </a>
+            @endcan
 
-                <a class="flex items-center px-4 py-2 mt-5 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                   href="{{ route('dashboard.profile') }}">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        <path
-                            d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="mx-4 font-medium" style="font-family: 'Museo 500', sans-serif;">Perfil</span>
-                </a>
+            {{-- Separador y Sección de Administración (si tiene algún permiso de admin) --}}
+            @if(Auth::check() && (Auth::user()->can('gestionar usuarios') || Auth::user()->can('gestionar roles') || Auth::user()->can('gestionar permisos')))
+                <hr class="my-4 border-blue-700 dark:border-gray-600">
+                <span class="px-4 text-xs text-blue-300 dark:text-gray-400 uppercase museo-500 tracking-wider">Administración</span>
 
-                <!--
-                    Sección de Administración
-                    Ahora, esta sección completa solo se mostrará si el usuario tiene CUALQUIERA
-                    de los permisos de administración (gestionar usuarios O gestionar parámetros)
-                -->
-                @if(auth()->user()->can('gestionar usuarios') || auth()->user()->can('gestionar parametros'))
-                    <hr class="my-4 border-gray-200 dark:border-gray-600">
-                    <span class="mx-4 text-xs text-gray-500 uppercase" style="font-family: 'Museo 500', sans-serif;">Administración</span>
+                @can('gestionar usuarios')
+                    <a class="flex items-center px-4 py-2 mt-1 text-osh-light-sidebar-link rounded hover:bg-osh-light-sidebar-hover dark:text-osh-dark-sidebar-link dark:hover:bg-osh-dark-sidebar-hover transition-colors duration-200 {{ request()->routeIs('admin.users.index') ? 'bg-osh-light-sidebar-active dark:bg-osh-dark-sidebar-active font-semibold' : '' }}"
+                       href="{{ route('admin.users.index') }}">
+                        <i class="fas fa-users-cog w-5 h-5 mr-3"></i>
+                        <span class="font-medium museo-500">Usuarios</span>
+                    </a>
+                @endcan
+                {{-- @can('gestionar roles') --}}
+                {{-- Futuro enlace a roles --}}
+                {{-- @endcan --}}
+                @can('gestionar permisos')
+                    <a class="flex items-center px-4 py-2 mt-1 text-osh-light-sidebar-link rounded hover:bg-osh-light-sidebar-hover dark:text-osh-dark-sidebar-link dark:hover:bg-osh-dark-sidebar-hover transition-colors duration-200 {{ request()->routeIs('admin.permissions.index') ? 'bg-osh-light-sidebar-active dark:bg-osh-dark-sidebar-active font-semibold' : '' }}"
+                       href="{{ route('admin.permissions.index') }}">
+                        <i class="fas fa-key w-5 h-5 mr-3"></i>
+                        <span class="font-medium museo-500">Permisos</span>
+                    </a>
+                @endcan
+            @endif
 
-                    {{-- Directiva @can de Spatie: solo muestra este enlace si el usuario tiene el permiso --}}
-                    @can('gestionar usuarios')
-                        <a class="flex items-center px-4 py-2 mt-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                           href="{{ route('dashboard.users') }}">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 00-12 0m12 0a9.094 9.094 0 01-12 0m12 0A9.094 9.094 0 013 18.72m18 0A9.094 9.094 0 003 18.72m15 0a9.094 9.094 0 01-12 0m12 0a9.094 9.094 0 00-12 0m12 0a.75.75 0 00-.62-.516c-.32.023-.626.04-.926.046a11.17 11.17 0 01-7.01-2.025A11.17 11.17 0 013.927 16.2a.75.75 0 00-.62.516" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 100-6 3 3 0 000 6z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="mx-4 font-medium" style="font-family: 'Museo 500', sans-serif;">Usuarios y Permisos</span>
-                        </a>
-                    @endcan
+            {{-- Separador Configuración --}}
+            {{-- Enlace a Perfil/Configuración ahora está en el dropdown de usuario --}}
 
-                    {{-- Directiva @can de Spatie: solo muestra este enlace si el usuario tiene el permiso --}}
-                    @can('gestionar parametros')
-                        <a class="flex items-center px-4 py-2 mt-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                           href="{{ route('dashboard.settings') }}">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M10.3246 4.31731C10.751 2.5609 13.249 2.5609 13.6754 4.31731C13.9708 5.53962 15.0041 6.38624 16.208 6.48373C18.0163 6.61864 19.1441 8.8536 17.9255 10.3207C17.0623 11.372 17.0623 12.878 17.9255 13.9293C19.1441 15.3964 18.0163 17.6314 16.208 17.7663C15.0041 17.8638 13.9708 18.7104 13.6754 19.9327C13.249 21.6891 10.751 21.6891 10.3246 19.9327C10.0292 18.7104 8.9959 17.8638 7.79195 17.7663C5.98366 17.6314 4.85587 15.3964 6.07452 13.9293C6.93774 12.878 6.93774 11.372 6.07452 10.3207C4.85587 8.8536 5.98366 6.61864 7.79195 6.48373C8.9959 6.38624 10.0292 5.53962 10.3246 4.31731Z"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
-                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                            <span class="mx-4 font-medium" style="font-family: 'Museo 500', sans-serif;">Parámetros</span>
-                        </a>
-                    @endcan
-                @endif
-
-            </nav>
-
-            <!-- Botón de Logout -->
-            <div class="mt-4">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit"
-                            class="flex items-center w-full px-4 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-700 dark:hover:text-red-200 hover:text-red-700">
-                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                             stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-                        </svg>
-                        <span class="mx-4 font-medium" style="font-family: 'Museo 500', sans-serif;">Cerrar Sesión</span>
-                    </button>
-                </form>
-            </div>
-        </div>
+        </nav>
     </aside>
 
     <!-- Contenido Principal -->
-    <div class="flex flex-col flex-1 overflow-y-auto">
-        <header class="flex items-center justify-between h-16 px-6 bg-white border-b dark:bg-gray-900 dark:border-gray-700">
-            <!-- Botón para toggle sidebar en móvil -->
-            <button @click="sidebarOpen = !sidebarOpen"
-                    class="text-gray-500 focus:outline-none focus:text-gray-600">
-                <svg x-show="!sidebarOpen" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <svg x-show="sidebarOpen" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Navbar Superior -->
+        <header class="flex items-center justify-between px-6 py-3 bg-osh-light-navbar border-b dark:bg-osh-dark-navbar dark:border-gray-700 shadow-sm print:hidden">
+            <div class="flex items-center">
+                <!-- Botón para abrir/cerrar sidebar en móvil -->
+                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 dark:text-gray-400 focus:outline-none lg:hidden mr-4">
+                    <i class="fas fa-bars w-6 h-6"></i>
+                </button>
+                <!-- Título de la página (dinámico) -->
+                <h1 class="text-xl font-semibold text-osh-light-text dark:text-osh-dark-text museo-500 hidden sm:block">
+                    @yield('title', 'Dashboard') {{-- Título por defecto --}}
+                </h1>
+            </div>
 
-            <!-- Título de la Sección -->
-            <h1 class="text-xl font-semibold text-gray-800 dark:text-white" style="font-family: 'Museo 500', sans-serif;">
-                @yield('title', 'Dashboard')
-            </h1>
+            <!-- Parte derecha del Navbar -->
+            <div class="flex items-center space-x-4">
+                <!-- Botón Modo Oscuro -->
+                <button id="theme-toggle" type="button"
+                        class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 transition-colors duration-200">
+                    <i id="theme-toggle-icon" class="fas"></i> <!-- Icono se define con JS -->
+                </button>
 
-            <!-- Espaciador -->
-            <div></div>
+                <!-- Dropdown de Usuario -->
+                <div x-data="{ dropdownOpen: false }" class="relative">
+                    <button @click="dropdownOpen = !dropdownOpen" @keydown.escape="dropdownOpen = false"
+                            class="relative z-10 block h-8 w-8 overflow-hidden rounded-full shadow focus:outline-none border-2 border-transparent focus:border-osh-light-accent dark:focus:border-osh-dark-accent">
+                        {{-- Placeholder Avatar --}}
+                        <span class="inline-flex items-center justify-center h-full w-full rounded-full bg-osh-light-accent dark:bg-osh-dark-accent text-white dark:text-osh-dark-sidebar">
+                                <span class="text-sm font-medium leading-none uppercase">{{ substr(Auth::user()->name ?? 'U', 0, 1) }}</span>
+                            </span>
+                        {{-- <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url ?? default_avatar_url }}" alt="Tu Avatar"> --}}
+                    </button>
+
+                    <!-- Menú Dropdown -->
+                    <div x-show="dropdownOpen"
+                         @click.away="dropdownOpen = false"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 z-20 w-56 py-2 mt-2 overflow-hidden bg-white rounded-md shadow-xl dark:bg-gray-800"
+                         x-cloak> <!-- x-cloak para evitar flash inicial -->
+
+                        <div class="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                            <div class="font-medium truncate">{{ Auth::user()->name ?? 'Usuario' }}</div>
+                            <div class="text-xs text-gray-500 truncate dark:text-gray-400">{{ Auth::user()->email ?? '' }}</div>
+                        </div>
+                        <hr class="border-gray-200 dark:border-gray-700">
+                        <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
+                            <i class="fas fa-user-cog w-4 h-4 mr-2"></i>Mi Perfil y Config.
+                        </a>
+                        <hr class="border-gray-200 dark:border-gray-700">
+                        <!-- Formulario para Logout -->
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-gray-600 dark:text-red-400 dark:hover:text-red-300">
+                                <i class="fas fa-sign-out-alt w-4 h-4 mr-2"></i>
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <!-- Contenido Dinámico -->
-        <main class="flex-1 p-6 md:p-10">
-
-            <!-- Aquí se cargará el contenido de las otras vistas (perfil, usuarios, etc.) -->
-            @yield('content')
-
+        <!-- Área de Contenido Principal -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-osh-light-bg dark:bg-osh-dark-bg p-6">
+            <div class="container mx-auto">
+                <!-- Alertas de Sesión (Status) -->
+                @if (session('status'))
+                    <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-900 dark:text-green-300" role="alert">
+                        {{ session('status') }}
+                    </div>
+                @endif
+                <!-- Alertas de Sesión (Error) -->
+                @if (session('error'))
+                    <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
+                <!-- Aquí se cargará el contenido específico de cada página -->
+                @yield('content')
+            </div>
         </main>
     </div>
 </div>
+
+<!-- Script Modo Oscuro (al final para asegurar que elementos existen) -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleIcon = document.getElementById('theme-toggle-icon');
+        const htmlElement = document.documentElement;
+
+        if (!themeToggleBtn || !themeToggleIcon) {
+            console.error("Theme toggle button or icon not found!");
+            return;
+        };
+
+        function updateThemeUI(isDarkMode) {
+            themeToggleIcon.classList.remove('fa-sun', 'fa-moon');
+            themeToggleIcon.classList.add(isDarkMode ? 'fa-moon' : 'fa-sun');
+        }
+
+        // Inicializar UI basada en clase 'dark' en <html>
+        updateThemeUI(htmlElement.classList.contains('dark'));
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDarkModeNow = htmlElement.classList.toggle('dark');
+            try { localStorage.setItem('color-theme', isDarkModeNow ? 'dark' : 'light'); }
+            catch (e) { console.error("Error saving theme preference:", e); }
+            updateThemeUI(isDarkModeNow);
+        });
+    });
+</script>
+@stack('scripts') {{-- Para añadir scripts específicos desde las vistas hijas --}}
 
 </body>
 </html>

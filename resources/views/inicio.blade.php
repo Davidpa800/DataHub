@@ -843,4 +843,3 @@
         console.log(data);
     }
 </script>
-
