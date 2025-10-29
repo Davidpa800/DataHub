@@ -8,12 +8,11 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configuración personalizada de Tailwind (opcional, pero útil si defines colores)
+        // Configuración personalizada de Tailwind
         tailwind.config = {
             darkMode: 'class', // Habilitar modo oscuro basado en clase
             theme: {
                 extend: {
-                    // Puedes añadir colores personalizados aquí si los necesitas
                     colors: {
                         // Colores personalizados para el tema claro
                         'osh-light-bg': '#F0F4F8', // Un gris azulado muy claro
@@ -45,7 +44,7 @@
 
     <!-- Flowbite (Para componentes como dropdowns, modales, etc.) -->
     <link rel="stylesheet" href="https://unpkg.com/flowbite@1.5.3/dist/flowbite.min.css" />
-    <script src="https://unpkg.com/flowbite@1.5.3/dist/flowbite.js"></script> <!-- Cargar después de Alpine si usas ambos -->
+    <script src="https://unpkg.com/flowbite@1.5.3/dist/flowbite.js"></script>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -121,7 +120,7 @@
             @endcan
 
             {{-- Separador y Sección de Administración (si tiene algún permiso de admin) --}}
-            @if(Auth::check() && (Auth::user()->can('gestionar usuarios') || Auth::user()->can('gestionar roles') || Auth::user()->can('gestionar permisos')))
+            @if(Auth::check() && (Auth::user()->can('gestionar usuarios') || Auth::user()->can('gestionar permisos') || Auth::user()->can('gestionar parametros')))
                 <hr class="my-4 border-blue-700 dark:border-gray-600">
                 <span class="px-4 text-xs text-blue-300 dark:text-gray-400 uppercase museo-500 tracking-wider">Administración</span>
 
@@ -132,9 +131,7 @@
                         <span class="font-medium museo-500">Usuarios</span>
                     </a>
                 @endcan
-                {{-- @can('gestionar roles') --}}
-                {{-- Futuro enlace a roles --}}
-                {{-- @endcan --}}
+
                 @can('gestionar permisos')
                     <a class="flex items-center px-4 py-2 mt-1 text-osh-light-sidebar-link rounded hover:bg-osh-light-sidebar-hover dark:text-osh-dark-sidebar-link dark:hover:bg-osh-dark-sidebar-hover transition-colors duration-200 {{ request()->routeIs('admin.permissions.index') ? 'bg-osh-light-sidebar-active dark:bg-osh-dark-sidebar-active font-semibold' : '' }}"
                        href="{{ route('admin.permissions.index') }}">
@@ -142,10 +139,16 @@
                         <span class="font-medium museo-500">Permisos</span>
                     </a>
                 @endcan
-            @endif
 
-            {{-- Separador Configuración --}}
-            {{-- Enlace a Perfil/Configuración ahora está en el dropdown de usuario --}}
+                {{-- Enlace al Módulo Parámetros (si tiene permiso) --}}
+                @can('gestionar parametros')
+                    <a class="flex items-center px-4 py-2 mt-1 text-osh-light-sidebar-link rounded hover:bg-osh-light-sidebar-hover dark:text-osh-dark-sidebar-link dark:hover:bg-osh-dark-sidebar-hover transition-colors duration-200 {{ request()->routeIs('admin.parametros.index') ? 'bg-osh-light-sidebar-active dark:bg-osh-dark-sidebar-active font-semibold' : '' }}"
+                       href="{{ route('admin.parametros.index') }}">
+                        <i class="fas fa-cogs w-5 h-5 mr-3"></i>
+                        <span class="font-medium museo-500">Parámetros</span>
+                    </a>
+                @endcan
+            @endif
 
         </nav>
     </aside>
@@ -247,10 +250,7 @@
         const themeToggleIcon = document.getElementById('theme-toggle-icon');
         const htmlElement = document.documentElement;
 
-        if (!themeToggleBtn || !themeToggleIcon) {
-            console.error("Theme toggle button or icon not found!");
-            return;
-        };
+        if (!themeToggleBtn || !themeToggleIcon) return;
 
         function updateThemeUI(isDarkMode) {
             themeToggleIcon.classList.remove('fa-sun', 'fa-moon');

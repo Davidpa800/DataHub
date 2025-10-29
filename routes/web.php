@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InicioController;
-use App\Http\Controllers\Nom035Controller; // <-- Añadido el use del controlador NOM-035
+// Los controladores de 'Parametros' y 'Nom035' se usan en sus propios archivos de ruta
 
 /*
 |--------------------------------------------------------------------------
@@ -43,16 +43,21 @@ Route::middleware(['auth'])->prefix('dashboard')->group(function () {
     // Gestión de Usuarios
     Route::get('/users', [InicioController::class, 'showUsers'])->name('admin.users.index')->middleware('can:gestionar usuarios');
 
+    // --- Cargar Rutas del Módulo Parámetros ---
+    Route::prefix('parametros')
+        ->name('admin.parametros.') // Nombres como 'admin.parametros.index'
+        ->middleware('can:gestionar parametros')
+        ->group(base_path('routes/parametros.php')); // <-- INCLUYE EL ARCHIVO DE PARÁMETROS
+
     // --- Cargar Rutas del Módulo NOM-035 ---
-    // Aplica prefijo de URL ('dashboard/nom035'), prefijo de nombre ('nom035.')
-    // y middleware ('auth', 'can:gestionar nom035') al archivo incluido
     Route::prefix('nom035')
-        ->name('nom035.')
+        ->name('nom035.') // Nombres como 'nom035.index'
         ->middleware('can:gestionar nom035')
-        ->group(base_path('routes/nom035.php'));
+        ->group(base_path('routes/nom035.php')); // <-- INCLUYE EL ARCHIVO NOM-035
 
 });
 
 // --- Cargar Rutas del Módulo de Encuestas (Públicas) ---
 // La ruta 'encuesta.show' está definida aquí
 Route::group([], base_path('routes/encuesta.php'));
+
